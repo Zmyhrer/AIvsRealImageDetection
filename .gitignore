@@ -12,6 +12,10 @@ build/
 .eggs/
 .Python
 
+# Pytest auto-generated configs
+pytest_configs.json
+
+
 # Virtual Environments
 venv/
 env/
