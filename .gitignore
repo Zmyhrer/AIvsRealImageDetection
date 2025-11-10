@@ -1,0 +1,82 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.dll
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.Python
+
+# Virtual Environments
+venv/
+env/
+.venv/
+ENV/
+.ENV/
+
+# IDE / Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
+
+# Jupyter / Colab
+.ipynb_checkpoints/
+*.ipynb
+
+# Logs & Debug
+*.log
+*.out
+*.err
+
+# Model Artifacts
+*.h5
+*.hdf5
+*.pb
+*.ckpt
+*.pt
+*.onnx
+*.tflite
+*.pkl
+*.joblib
+model_cache/
+models/
+
+# Hugging Face
+huggingface/
+cache/
+transformers_cache/
+datasets_cache/
+
+# FastAPI / Uvicorn
+*.db
+*.sqlite3
+staticfiles/
+media/
+
+# Testing & Coverage
+htmlcov/
+.coverage
+.pytest_cache/
+.tox/
+.mypy_cache/
+
+# Environment & Config
+.env
+.env.*
+*.yaml
+*.yml
+config/
+venv/
+__pycache__/
+venv/
+__pycache__/
