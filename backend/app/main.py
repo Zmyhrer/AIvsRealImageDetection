@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from app.api.v1.routes.predict import router as predict_router
 
 from app.middleware import add_middlewares
 from app.core.logging import setup_logging
@@ -38,7 +39,7 @@ def create_app() -> FastAPI:
 
     
     # API routers
-    app.include_router(app.predict.router, prefix="/api/v1/predict", tags=["prediction"])
+    app.include_router(predict_router, prefix="/api/v1/predict", tags=["prediction"])
 
     
     # Root and health endpoints
