@@ -5,7 +5,7 @@ import io
 
 router = APIRouter()
 
-@router.post("/predict")
+@router.post("/")
 async def predict(file: UploadFile = File(...)):
     try:
         contents = await file.read()
