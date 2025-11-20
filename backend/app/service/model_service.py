@@ -3,7 +3,7 @@ import torch
 from PIL import Image
 import numpy as np
 
-MODEL_ID = "Ateeqq/ai-vs-human-image-detector"
+MODEL_ID = "jacoballessio/ai-image-detect-distilled"
 
 processor = AutoImageProcessor.from_pretrained(MODEL_ID)
 model = AutoModelForImageClassification.from_pretrained(MODEL_ID)

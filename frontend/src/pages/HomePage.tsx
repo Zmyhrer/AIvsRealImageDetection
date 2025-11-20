@@ -1,16 +1,40 @@
 import React, { useState } from "react";
 import Dropzone from "../components/Dropzone";
+import type { PredictionResult } from "../types/PredictionResult";
+import { fetchPrediction } from "../api/predict";
 
 const HomePage: React.FC = () => {
   const [image, setImage] = useState<File | null>(null);
-  const [confidenceScore, setConfidenceScore] = useState(0);
-  const [prediction, setPrediction] = useState("");
+  const [confidenceScore, setConfidenceScore] = useState<number | null>(null);
+  const [prediction, setPrediction] = useState<string>("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  function handleAnalyzeImage() {
-    alert("Analyzing");
-    setPrediction("AI");
-    setConfidenceScore(55);
-  }
+  const handlePredictImage = async () => {
+    if (!image) {
+      alert("Please select an image first!");
+      return;
+    }
+
+    if (isAnalyzing) return;
+
+    setIsAnalyzing(true);
+
+    try {
+      const response: PredictionResult = await fetchPrediction(image);
+      setPrediction(response.prediction);
+      setConfidenceScore(Math.round(response.confidence * 100)); // convert to %
+    } catch (error) {
+      console.error("Prediction failed:", error);
+      alert("Failed to predict image. Please try again.");
+    }
+  };
+
+  const handleSetImage = (file: File) => {
+    setImage(file);
+    setIsAnalyzing(false);
+    setPrediction("");
+    setConfidenceScore(0);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4">
@@ -23,11 +47,7 @@ const HomePage: React.FC = () => {
         </p>
       </header>
 
-      <Dropzone
-        onFileSelect={(file: File) => {
-          setImage(file);
-        }}
-      />
+      <Dropzone onFileSelect={(file: File) => handleSetImage(file)} />
 
       <p className="text-gray-600 mb-2">
         {image ? `Selected: ${image.name}` : "No image selected"}
@@ -35,17 +55,20 @@ const HomePage: React.FC = () => {
 
       <button
         className="w-full max-w-xl bg-blue-600 text-white rounded-lg py-2 font-medium hover:bg-blue-700 transition-colors mb-6"
-        onClick={handleAnalyzeImage}
+        onClick={handlePredictImage}
+        disabled={isAnalyzing}
       >
         Analyze Image
       </button>
 
-      <div className="w-full max-w-xl bg-white rounded-xl shadow-md p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-2">
-          Prediction: {prediction}
-        </h2>
-        <p className="text-gray-600">Confidence: {confidenceScore}%</p>
-      </div>
+      {prediction && confidenceScore !== null && (
+        <div className="w-full max-w-xl bg-white rounded-xl shadow-md p-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">
+            Prediction: {prediction}
+          </h2>
+          <p className="text-gray-600">Confidence: {confidenceScore}%</p>
+        </div>
+      )}
     </div>
   );
 };
