@@ -1,6 +1,6 @@
 import { render, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import Dropzone from "../components/Dropzone";
+import Dropzone from "../../components/Dropzone";
 
 describe("Dropzone Component", () => {
   it("renders placeholder text initially", () => {
