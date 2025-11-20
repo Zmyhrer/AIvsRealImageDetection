@@ -1,16 +1,17 @@
-import { createDefaultPreset } from "ts-jest";
-
-const tsJestTransformCfg = createDefaultPreset().transform;
-
 export default {
   preset: "ts-jest",
-  testEnvironment: "jsdom",
-  transform: {
-    ...tsJestTransformCfg,
+  testEnvironment: "jest-environment-jsdom",
+  globals: {
+    "ts-jest": {
+      tsconfig: "tsconfig.jest.json",
+    },
   },
-  setupFilesAfterEnv: ["<rootDir>/tests/setupTests.ts"],
+  setupFilesAfterEnv: ["<rootDir>/src/tests/setupTests.ts"],
+  transform: {
+    "^.+\\.tsx?$": "ts-jest",
+  },
   moduleNameMapper: {
-    "^.+\\.(css|scss)$": "identity-obj-proxy", // Mock CSS imports
+    "^.+\\.(css|scss)$": "identity-obj-proxy",
   },
   testPathIgnorePatterns: ["/node_modules/", "/dist/"],
 };
