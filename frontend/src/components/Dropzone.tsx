@@ -2,24 +2,31 @@ import React, { useRef, useState } from "react";
 
 interface DropzoneProps {
   onFileSelect: (file: File) => void;
+  imgURL: string;
 }
 
-const Dropzone: React.FC<DropzoneProps> = ({ onFileSelect }) => {
-  const [preview, setPreview] = useState<string | null>(null);
+const Dropzone: React.FC<DropzoneProps> = ({ onFileSelect, imgURL }) => {
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  /**
+   * Provides the correct preview image.
+   * imgURL (history selection) has priority.
+   */
+  const preview = imgURL || localPreview;
+
+  /**
+   * Handles dropped/selected files.
+   */
   const handleFiles = (files: FileList) => {
     if (files.length === 0) return;
+
     const file = files[0];
+    if (!file.type.startsWith("image/")) return;
 
-    // Only allow images
-    if (!file.type.startsWith("image/")) {
-      console.warn("Only image files are allowed");
-      return;
-    }
-
-    setPreview(URL.createObjectURL(file));
+    const url = URL.createObjectURL(file);
+    setLocalPreview(url);
     onFileSelect(file);
   };
 
@@ -34,17 +41,13 @@ const Dropzone: React.FC<DropzoneProps> = ({ onFileSelect }) => {
     setIsDragging(true);
   };
 
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
+  const handleDragLeave = () => setIsDragging(false);
 
-  const handleClick = () => {
-    inputRef.current?.click();
-  };
+  const handleClick = () => inputRef.current?.click();
 
   return (
     <div
-      className={`w-full max-w-xl border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer
+      className={`w-full border-2 border-dashed rounded-xl p-2 flex flex-col items-center justify-center cursor-pointer
         ${
           isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-white"
         }`}
@@ -60,6 +63,7 @@ const Dropzone: React.FC<DropzoneProps> = ({ onFileSelect }) => {
           Drag and drop an image here, or click to select
         </p>
       )}
+
       <input
         type="file"
         ref={inputRef}

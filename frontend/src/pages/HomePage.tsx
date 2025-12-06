@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
-import Dropzone from "../components/Dropzone";
 import Notification from "../components/Notification";
 import type { PredictionResult } from "../types/PredictionResult";
 import { fetchPrediction } from "../api/predict";
-import ConfidenceBar from "../components/ConfidenceBar";
 import History from "../components/History";
 import type { HistoryItem } from "../components/History";
+import Header from "../components/Header";
+import Dropzone from "../components/Dropzone";
+import FileLocation from "../components/FileLocation";
+import AnalyzeButton from "../components/AnalyzeButton";
+import PredictionDisplay from "../components/PredictionDisplay";
 
 const HomePage: React.FC = () => {
   const [image, setImage] = useState<File | null>(null);
@@ -13,6 +16,10 @@ const HomePage: React.FC = () => {
   const [prediction, setPrediction] = useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [selectedHistoryImage, setSelectedHistoryImage] = useState<
+    string | null
+  >(null);
+
   const [notification, setNotification] = useState<{
     message: string;
     type: "success" | "error";
@@ -20,14 +27,21 @@ const HomePage: React.FC = () => {
 
   useEffect(() => {
     const savedHistory = localStorage.getItem("imageAnalysisHistory");
-    if (savedHistory) {
-      setHistory(JSON.parse(savedHistory));
-    }
+    if (savedHistory) setHistory(JSON.parse(savedHistory));
   }, []);
 
   useEffect(() => {
     localStorage.setItem("imageAnalysisHistory", JSON.stringify(history));
   }, [history]);
+
+  const fetchUrlAsFile = async (
+    url: string,
+    filename: string
+  ): Promise<File> => {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new File([blob], filename, { type: blob.type });
+  };
 
   const handlePredictImage = async () => {
     if (!image) {
@@ -51,17 +65,23 @@ const HomePage: React.FC = () => {
 
       setPrediction(response.prediction);
       setConfidenceScore(confidence);
-      setNotification({ message: "Analysis complete!", type: "success" });
+
+      setNotification({
+        message: "Analysis complete!",
+        type: "success",
+      });
 
       const newHistoryItem: HistoryItem = {
         id: new Date().toISOString(),
         imageUrl: URL.createObjectURL(image),
         prediction: response.prediction,
-        confidence: confidence,
+        confidence,
       };
+
       setHistory((prev) => [newHistoryItem, ...prev]);
     } catch (error) {
       console.error("Prediction failed:", error);
+
       setNotification({
         message: "Failed to analyze image. Please try again.",
         type: "error",
@@ -72,26 +92,33 @@ const HomePage: React.FC = () => {
   };
 
   const handleSetImage = (file: File) => {
+    setSelectedHistoryImage(null);
     setImage(file);
-    setIsAnalyzing(false);
     setPrediction("");
     setConfidenceScore(null);
     setNotification(null);
   };
-
-  const handleSelectHistoryItem = (item: HistoryItem) => {
+  const handleSelectHistoryItem = async (item: HistoryItem) => {
     setPrediction(item.prediction);
     setConfidenceScore(item.confidence);
-    setImage(null);
+
+    setSelectedHistoryImage(item.imageUrl);
+
+    const restored = await fetchUrlAsFile(item.imageUrl, "history-image.png");
+    setImage(restored);
+
     setNotification(null);
   };
 
   const handleClearHistory = () => {
     setHistory([]);
+    setSelectedHistoryImage(null);
+    setConfidenceScore(null);
+    setPrediction("");
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4">
+    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-indigo-100 p-6">
       {notification && (
         <Notification
           message={notification.message}
@@ -100,44 +127,43 @@ const HomePage: React.FC = () => {
         />
       )}
 
-      <header className="w-full max-w-2xl text-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">
-          AI vs Real Image Detection
-        </h1>
-        <p className="text-gray-600 mt-2">
-          Upload an image (AI-generated or real)
-        </p>
-      </header>
-
-      <Dropzone onFileSelect={handleSetImage} />
-
-      <p className="text-gray-600 mb-2">
-        {image ? `Selected: ${image.name}` : "No image selected"}
-      </p>
-
-      <button
-        className="w-full max-w-xl bg-blue-600 text-white rounded-lg py-2 font-medium hover:bg-blue-700 transition-colors mb-6 disabled:bg-gray-400"
-        onClick={handlePredictImage}
-        disabled={isAnalyzing || !image}
-      >
-        {isAnalyzing ? "Analyzing..." : "Analyze Image"}
-      </button>
-
-      {prediction && confidenceScore !== null && (
-        <div className="w-full max-w-xl bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">
-            Prediction: {prediction}
-          </h2>
-          <p className="text-gray-600 mb-2">Confidence: {confidenceScore}%</p>
-          <ConfidenceBar confidenceScore={confidenceScore} />
-        </div>
-      )}
-
-      <History
-        history={history}
-        onSelect={handleSelectHistoryItem}
-        onClear={handleClearHistory}
+      <Header
+        title="AI vs Real Image Detection"
+        description="Upload an image to detect whether it is AI-generated or real"
       />
+
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
+        <div className="md:col-span-2 bg-white backdrop-blur-md bg-opacity-60 rounded-3xl shadow-2xl p-8 border border-indigo-200 hover:shadow-3xl transition-shadow duration-300">
+          <Dropzone
+            onFileSelect={handleSetImage}
+            imgURL={selectedHistoryImage || ""}
+          />
+
+          <FileLocation image={image} />
+
+          <AnalyzeButton
+            isAnalyzing={isAnalyzing}
+            disabled={isAnalyzing || !image}
+            onClick={handlePredictImage}
+          />
+
+          <PredictionDisplay
+            prediction={prediction}
+            confidenceScore={confidenceScore}
+          />
+        </div>
+
+        <aside className="bg-white rounded-3xl shadow-2xl p-6 border border-indigo-200 max-h-[80vh] overflow-y-auto hover:shadow-3xl transition-shadow duration-300">
+          <h3 className="text-xl font-semibold text-indigo-700 mb-4">
+            History
+          </h3>
+          <History
+            history={history}
+            onSelect={handleSelectHistoryItem}
+            onClear={handleClearHistory}
+          />
+        </aside>
+      </div>
     </div>
   );
 };
