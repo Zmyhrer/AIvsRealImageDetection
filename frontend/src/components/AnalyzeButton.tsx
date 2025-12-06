@@ -16,7 +16,7 @@ const AnalyzeButton: React.FC<AnalyzeButtonProps> = ({
                 ${
                   disabled
                     ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-500 to-indigo-600 hover:scale-105 hover:shadow-2xl"
+                    : "bg-blue-500 hover:bg-blue-600 duration-150"
                 }`}
     onClick={onClick}
     disabled={disabled}

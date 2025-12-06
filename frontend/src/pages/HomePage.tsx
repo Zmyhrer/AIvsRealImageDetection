@@ -153,10 +153,8 @@ const HomePage: React.FC = () => {
           />
         </div>
 
-        <aside className="bg-white rounded-3xl shadow-2xl p-6 border border-indigo-200 max-h-[80vh] overflow-y-auto hover:shadow-3xl transition-shadow duration-300">
-          <h3 className="text-xl font-semibold text-indigo-700 mb-4">
-            History
-          </h3>
+        <aside className="bg-white rounded-3xl z-2 py-6 px-4 border border-indigo-200">
+          <h3 className="text-xl font-semibold text-indigo-700">History</h3>
           <History
             history={history}
             onSelect={handleSelectHistoryItem}
