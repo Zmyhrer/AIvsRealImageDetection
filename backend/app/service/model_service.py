@@ -1,19 +1,22 @@
-from transformers import AutoImageProcessor, AutoModelForImageClassification
+from transformers import AutoImageProcessor, SiglipForImageClassification
 import torch
 from PIL import Image
-import numpy as np
 
-MODEL_ID = "jacoballessio/ai-image-detect-distilled"
+MODEL_ID = "Ateeqq/ai-vs-human-image-detector"
 
 processor = AutoImageProcessor.from_pretrained(MODEL_ID)
-model = AutoModelForImageClassification.from_pretrained(MODEL_ID)
+model = SiglipForImageClassification.from_pretrained(MODEL_ID)
+model.eval()
 
 def predict_image(img: Image.Image):
     inputs = processor(img, return_tensors="pt")
     with torch.no_grad():
         outputs = model(**inputs)
     logits = outputs.logits
-    probs = torch.softmax(logits, dim=1)
-    confidence_ai = float(probs[0][1])
-    prediction = "AI" if confidence_ai > 0.5 else "Real"
-    return prediction, confidence_ai
+    probs = torch.softmax(logits, dim=-1)[0]
+
+    pred_idx = logits.argmax(-1).item()
+    pred_label = model.config.id2label[pred_idx]
+    pred_confidence = float(probs[pred_idx])
+
+    return pred_label, pred_confidence

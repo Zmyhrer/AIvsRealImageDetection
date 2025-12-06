@@ -86,3 +86,6 @@ venv/
 __pycache__/
 venv/
 __pycache__/
+
+# Scripts
+.sh
