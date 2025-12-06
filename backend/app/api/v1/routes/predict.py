@@ -1,5 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, status
 from PIL import Image, UnidentifiedImageError
+from PIL.Image import Image as PILImage
 from app.service.model_service import predict_image
 import io
 
@@ -19,7 +20,7 @@ async def predict(file: UploadFile = File(...)):
     # Read and validate image
     try:
         contents = await file.read()
-        img = Image.open(io.BytesIO(contents))
+        img: PILImage = Image.open(io.BytesIO(contents))
         if img.mode != "RGB":
             img = img.convert("RGB")
     except UnidentifiedImageError:
