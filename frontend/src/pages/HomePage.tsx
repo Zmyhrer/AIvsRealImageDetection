@@ -1,20 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Dropzone from "../components/Dropzone";
 import Notification from "../components/Notification";
 import type { PredictionResult } from "../types/PredictionResult";
 import { fetchPrediction } from "../api/predict";
 import ConfidenceBar from "../components/ConfidenceBar";
+import History from "../components/History";
+import type { HistoryItem } from "../components/History";
 
 const HomePage: React.FC = () => {
   const [image, setImage] = useState<File | null>(null);
   const [confidenceScore, setConfidenceScore] = useState<number | null>(null);
   const [prediction, setPrediction] = useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-
+  const [history, setHistory] = useState<HistoryItem[]>([]);
   const [notification, setNotification] = useState<{
     message: string;
     type: "success" | "error";
   } | null>(null);
+
+  useEffect(() => {
+    const savedHistory = localStorage.getItem("imageAnalysisHistory");
+    if (savedHistory) {
+      setHistory(JSON.parse(savedHistory));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("imageAnalysisHistory", JSON.stringify(history));
+  }, [history]);
 
   const handlePredictImage = async () => {
     if (!image) {
@@ -34,9 +47,19 @@ const HomePage: React.FC = () => {
 
     try {
       const response: PredictionResult = await fetchPrediction(image);
+      const confidence = Math.round(response.confidence * 100);
+
       setPrediction(response.prediction);
-      setConfidenceScore(Math.round(response.confidence * 100));
+      setConfidenceScore(confidence);
       setNotification({ message: "Analysis complete!", type: "success" });
+
+      const newHistoryItem: HistoryItem = {
+        id: new Date().toISOString(),
+        imageUrl: URL.createObjectURL(image),
+        prediction: response.prediction,
+        confidence: confidence,
+      };
+      setHistory((prev) => [newHistoryItem, ...prev]);
     } catch (error) {
       console.error("Prediction failed:", error);
       setNotification({
@@ -56,9 +79,19 @@ const HomePage: React.FC = () => {
     setNotification(null);
   };
 
+  const handleSelectHistoryItem = (item: HistoryItem) => {
+    setPrediction(item.prediction);
+    setConfidenceScore(item.confidence);
+    setImage(null);
+    setNotification(null);
+  };
+
+  const handleClearHistory = () => {
+    setHistory([]);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4">
-      {/* Render Notification if it exists */}
       {notification && (
         <Notification
           message={notification.message}
@@ -76,7 +109,7 @@ const HomePage: React.FC = () => {
         </p>
       </header>
 
-      <Dropzone onFileSelect={(file: File) => handleSetImage(file)} />
+      <Dropzone onFileSelect={handleSetImage} />
 
       <p className="text-gray-600 mb-2">
         {image ? `Selected: ${image.name}` : "No image selected"}
@@ -96,10 +129,15 @@ const HomePage: React.FC = () => {
             Prediction: {prediction}
           </h2>
           <p className="text-gray-600 mb-2">Confidence: {confidenceScore}%</p>
-
           <ConfidenceBar confidenceScore={confidenceScore} />
         </div>
       )}
+
+      <History
+        history={history}
+        onSelect={handleSelectHistoryItem}
+        onClear={handleClearHistory}
+      />
     </div>
   );
 };
