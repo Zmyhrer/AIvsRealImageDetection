@@ -1,8 +1,3 @@
-/**
- * @fileoverview Tests for the AnalyzeButton component
- */
-
-import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import AnalyzeButton from "../../components/AnalyzeButton";
 
