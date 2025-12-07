@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Notification from "../components/Notification";
 import type { PredictionResult } from "../types/PredictionResult";
 import { fetchPrediction } from "../api/predict";
@@ -19,6 +19,21 @@ const HomePage: React.FC = () => {
   const [selectedHistoryImage, setSelectedHistoryImage] = useState<
     string | null
   >(null);
+
+  const leftRef = useRef<HTMLDivElement | null>(null);
+  const [leftHeight, setLeftHeight] = useState<number>(0);
+
+  useEffect(() => {
+    if (!leftRef.current) return;
+
+    const observer = new ResizeObserver(([entry]) => {
+      setLeftHeight(entry.contentRect.height);
+    });
+
+    observer.observe(leftRef.current);
+
+    return () => observer.disconnect();
+  }, []);
 
   const [notification, setNotification] = useState<{
     message: string;
@@ -118,7 +133,7 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-indigo-100 p-6">
+    <div className="bg-linear-to-b from-indigo-200 to-indigo-50 p-6 min-h-screen flex flex-col">
       {notification && (
         <Notification
           message={notification.message}
@@ -132,8 +147,11 @@ const HomePage: React.FC = () => {
         description="Upload an image to detect whether it is AI-generated or real"
       />
 
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
-        <div className="md:col-span-2 bg-white backdrop-blur-md bg-opacity-60 rounded-3xl shadow-2xl p-8 border border-indigo-200 hover:shadow-3xl transition-shadow duration-300">
+      <div
+        ref={leftRef}
+        className="mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 mt-8"
+      >
+        <div className="md:col-span-2 bg-white rounded-3xl shadow-2xl p-4 border border-indigo-200">
           <Dropzone
             onFileSelect={handleSetImage}
             imgURL={selectedHistoryImage || ""}
@@ -153,8 +171,10 @@ const HomePage: React.FC = () => {
           />
         </div>
 
-        <aside className="bg-white rounded-3xl z-2 py-6 px-4 border border-indigo-200">
-          <h3 className="text-xl font-semibold text-indigo-700">History</h3>
+        <aside
+          className="bg-white rounded-3xl z-2 p-4 border border-indigo-200 flex flex-col min-h-0"
+          style={{ height: leftHeight }}
+        >
           <History
             history={history}
             onSelect={handleSelectHistoryItem}

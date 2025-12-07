@@ -15,26 +15,28 @@ interface HistoryProps {
 }
 
 const History: React.FC<HistoryProps> = ({ history, onSelect, onClear }) => {
-  if (history.length === 0) return null;
-
   return (
-    <div className="w-full max-w-full sm:max-w-md md:max-w-xl max-h-[75vh] overflow-y-auto">
+    /**
+     * Root wrapper becomes a flex column.
+     * h-full ensures it stretches to the parent container's height.
+     */
+    <div className="flex-1 overflow-y-auto">
       {/* Sticky Header */}
       <div className="flex justify-between items-center sticky top-0 z-10 bg-white px-3 py-2 border-b border-gray-200">
         <h3 className="text-lg sm:text-xl font-semibold text-gray-700">
-          Recent Analyses
+          History
         </h3>
 
         <button
           onClick={onClear}
           className="text-sm sm:text-base text-red-600 hover:text-red-800 transition-colors"
         >
-          Clear History
+          Clear
         </button>
       </div>
 
-      {/* List Container */}
-      <div className="space-y-3 p-3">
+      {/* Scrollable list that expands automatically */}
+      <div className="space-y-3 pr-3 overflow-y-auto flex-1">
         {history.map((item) => (
           <div
             key={item.id}
@@ -59,8 +61,8 @@ const History: React.FC<HistoryProps> = ({ history, onSelect, onClear }) => {
 
             {/* Prediction & Confidence */}
             <div className="grow flex flex-col justify-between">
-              <div className="flex justify-between items-center mb-1">
-                <p className="font-semibold text-gray-800 text-sm sm:text-base break-words">
+              <div className="flex justify-between items-center mb-1 space-x-[10px]">
+                <p className="font-semibold text-gray-800 text-sm sm:text-base wrap-break-words">
                   {item.prediction}
                 </p>
                 <p className="text-sm sm:text-base text-gray-600">

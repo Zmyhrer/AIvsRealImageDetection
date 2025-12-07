@@ -1,1 +1,9 @@
 @import "tailwindcss";
+
+
+/* ---------------------------------------------------------
+ * Custom Scrollbar Styling (WebKit Browsers)
+ * Applies to elements with the .pretty-scrollbar class
+ * --------------------------------------------------------- */
+
+@custom-variant hover (&:hover);
