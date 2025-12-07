@@ -12,17 +12,17 @@ describe("Header Component", () => {
     expect(descriptionElement).toBeInTheDocument();
   });
 
-  it("renders empty title and description if empty strings are provided", () => {
+  it("renders default text if title and description are empty strings", () => {
     render(<Header title="" description="" />);
 
-    const titleElement = screen.getByRole("heading");
-    const descriptionElement = screen.getByText("");
+    const titleElement = screen.getByRole("heading", { name: /untitled/i });
+    const descriptionElement = screen.getByText(/no description available/i);
 
     expect(titleElement).toBeInTheDocument();
     expect(descriptionElement).toBeInTheDocument();
   });
 
-  it("renders correctly with long title and description", () => {
+  it("renders long title and description correctly", () => {
     const longTitle =
       "This is a very long title that should still render correctly";
     const longDescription =
@@ -37,32 +37,29 @@ describe("Header Component", () => {
     expect(descriptionElement).toBeInTheDocument();
   });
 
-  it("updates when props change", () => {
+  it("updates correctly when props change", () => {
     const { rerender } = render(
       <Header title="Old Title" description="Old Description" />
     );
 
-    let titleElement = screen.getByRole("heading", { name: /old title/i });
-    let descriptionElement = screen.getByText(/old description/i);
-
-    expect(titleElement).toBeInTheDocument();
-    expect(descriptionElement).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /old title/i })
+    ).toBeInTheDocument();
+    expect(screen.getByText(/old description/i)).toBeInTheDocument();
 
     rerender(<Header title="New Title" description="New Description" />);
 
-    titleElement = screen.getByRole("heading", { name: /new title/i });
-    descriptionElement = screen.getByText(/new description/i);
-
-    expect(titleElement).toBeInTheDocument();
-    expect(descriptionElement).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /new title/i })
+    ).toBeInTheDocument();
+    expect(screen.getByText(/new description/i)).toBeInTheDocument();
   });
 
   it("handles undefined props gracefully", () => {
-    // @ts-expect-error testing edge case
     render(<Header title={undefined} description={undefined} />);
 
-    const titleElement = screen.getByRole("heading");
-    const descriptionElement = screen.getByText("");
+    const titleElement = screen.getByRole("heading", { name: /untitled/i });
+    const descriptionElement = screen.getByText(/no description available/i);
 
     expect(titleElement).toBeInTheDocument();
     expect(descriptionElement).toBeInTheDocument();

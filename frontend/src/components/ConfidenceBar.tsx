@@ -1,14 +1,18 @@
 import React from "react";
 
 interface ConfidenceBarProps {
-  confidenceScore: number | null;
+  confidenceScore?: number | null;
 }
 
-const ConfidenceBar: React.FC<ConfidenceBarProps> = ({ confidenceScore }) => {
+const ConfidenceBar: React.FC<ConfidenceBarProps> = ({
+  confidenceScore = 0,
+}) => {
+  const safeScore = Math.min(Math.max(confidenceScore ?? 0, 0), 100);
+
   const getConfidenceBarColor = () => {
-    if (!confidenceScore || confidenceScore < 0) return "bg-gray-200";
-    if (confidenceScore > 75) return "bg-green-500";
-    if (confidenceScore > 50) return "bg-yellow-500";
+    if (safeScore <= 0) return "bg-gray-200";
+    if (safeScore > 75) return "bg-green-500";
+    if (safeScore > 50) return "bg-yellow-500";
     return "bg-red-500";
   };
 
@@ -17,7 +21,7 @@ const ConfidenceBar: React.FC<ConfidenceBarProps> = ({ confidenceScore }) => {
       <div
         role="progressbar"
         className={`h-4 rounded-full transition-all duration-500 ${getConfidenceBarColor()}`}
-        style={{ width: `${confidenceScore}%` }}
+        style={{ width: `${safeScore}%` }}
       ></div>
     </div>
   );

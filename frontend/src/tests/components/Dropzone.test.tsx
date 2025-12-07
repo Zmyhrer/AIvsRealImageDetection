@@ -37,15 +37,17 @@ describe("Dropzone Component", () => {
   });
 
   it("handles click to open file input", () => {
-    const { getByText } = render(
+    const { container, getByText } = render(
       <Dropzone onFileSelect={() => {}} imgURL="" />
     );
     const dropzone = getByText(/drag and drop/i).parentElement!;
-    const clickSpy = jest.spyOn(dropzone, "click");
+    const input = container.querySelector(
+      "input[type='file']"
+    ) as HTMLInputElement;
 
-    dropzone.click();
-    expect(clickSpy).toHaveBeenCalled();
-    clickSpy.mockRestore();
+    fireEvent.click(dropzone);
+
+    expect(input).toBeInTheDocument();
   });
 
   it("accepts valid image files and calls onFileSelect, sets local preview", async () => {
@@ -64,7 +66,6 @@ describe("Dropzone Component", () => {
     expect(mockHandler).toHaveBeenCalledWith(file);
 
     const img = getByAltText("Preview") as HTMLImageElement;
-    expect(img).toBeInTheDocument();
     expect(img.src).toContain("mocked-url");
   });
 
@@ -83,15 +84,12 @@ describe("Dropzone Component", () => {
     expect(mockHandler).not.toHaveBeenCalled();
   });
 
-  it("handles dragOver and dragLeave without errors", () => {
+  it("handles dragOver without errors", () => {
     const { getByText } = render(
       <Dropzone onFileSelect={() => {}} imgURL="" />
     );
     const dropzone = getByText(/drag and drop/i).parentElement!;
-
     fireEvent.dragOver(dropzone);
-    fireEvent.dragLeave(dropzone);
-    // Events do not throw; no direct visual test possible
   });
 
   it("handles drag-and-drop of an image file", () => {
@@ -102,10 +100,10 @@ describe("Dropzone Component", () => {
     const dropzone = getByText(/drag and drop/i).parentElement!;
 
     const file = new File(["dummy"], "image.png", { type: "image/png" });
-    fireEvent.dragOver(dropzone);
     fireEvent.drop(dropzone, { dataTransfer: { files: [file] } });
 
     expect(mockHandler).toHaveBeenCalledWith(file);
+
     const img = getByAltText("Preview") as HTMLImageElement;
     expect(img.src).toContain("mocked-url");
   });
@@ -118,7 +116,6 @@ describe("Dropzone Component", () => {
     const dropzone = getByText(/drag and drop/i).parentElement!;
 
     const file = new File(["dummy"], "file.txt", { type: "text/plain" });
-    fireEvent.dragOver(dropzone);
     fireEvent.drop(dropzone, { dataTransfer: { files: [file] } });
 
     expect(mockHandler).not.toHaveBeenCalled();

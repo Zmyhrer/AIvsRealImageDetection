@@ -8,6 +8,15 @@ describe("AnalyzeButton Component", () => {
     jest.clearAllMocks();
   });
 
+  test("renders correctly with default text and defaults when no props provided", () => {
+    render(<AnalyzeButton />);
+
+    const button = screen.getByRole("button", { name: /analyze image/i });
+    expect(button).toBeInTheDocument();
+    expect(button).not.toBeDisabled();
+    expect(button).toHaveClass("bg-blue-500");
+  });
+
   test("renders correctly with default text when not analyzing", () => {
     render(
       <AnalyzeButton
@@ -62,7 +71,6 @@ describe("AnalyzeButton Component", () => {
     );
 
     const button = screen.getByRole("button", { name: /analyze image/i });
-    // Can't fully test hover pseudo-class in Jest DOM, but we can check base class
     expect(button).toHaveClass("bg-blue-500");
   });
 
@@ -106,7 +114,6 @@ describe("AnalyzeButton Component", () => {
     let button = screen.getByRole("button", { name: /analyze image/i });
     expect(button).toBeInTheDocument();
 
-    // Update prop
     rerender(
       <AnalyzeButton
         isAnalyzing={true}
@@ -114,7 +121,21 @@ describe("AnalyzeButton Component", () => {
         onClick={onClickMock}
       />
     );
+
     button = screen.getByRole("button", { name: /analyzing.../i });
     expect(button).toBeInTheDocument();
+  });
+
+  test("handles undefined onClick gracefully without throwing", () => {
+    render(<AnalyzeButton onClick={undefined} />);
+    const button = screen.getByRole("button", { name: /analyze image/i });
+    expect(() => fireEvent.click(button)).not.toThrow();
+  });
+
+  test("handles undefined isAnalyzing and disabled props gracefully", () => {
+    render(<AnalyzeButton isAnalyzing={undefined} disabled={undefined} />);
+    const button = screen.getByRole("button", { name: /analyze image/i });
+    expect(button).not.toBeDisabled();
+    expect(button).toHaveClass("bg-blue-500");
   });
 });

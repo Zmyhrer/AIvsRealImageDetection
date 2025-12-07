@@ -1,16 +1,18 @@
 import React from "react";
 
 interface HeaderProps {
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ title, description }) => (
+const Header: React.FC<HeaderProps> = ({ title = "", description = "" }) => (
   <header className="max-w-7xl mx-auto text-center mb-8">
     <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-2">
-      {title}
+      {title || "Untitled"}
     </h1>
-    <p className="text-gray-600 text-lg md:text-xl">{description}</p>
+    <p className="text-gray-600 text-lg md:text-xl">
+      {description || "No description available"}
+    </p>
   </header>
 );
 

@@ -1,23 +1,29 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 
 interface DropzoneProps {
   onFileSelect: (file: File) => void;
-  imgURL: string;
+  imgURL?: string | null;
 }
 
-const Dropzone: React.FC<DropzoneProps> = ({ onFileSelect, imgURL }) => {
+const Dropzone: React.FC<DropzoneProps> = ({ onFileSelect, imgURL = null }) => {
   const [localPreview, setLocalPreview] = useState<string | null>(null);
-
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  /** Final preview (history or uploaded file) */
   const preview = imgURL || localPreview;
 
-  /** Handle uploads */
-  const handleFiles = (files: FileList) => {
-    if (files.length === 0) return;
+  const handleFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
     const file = files[0];
-    if (!file.type.startsWith("image/")) return;
+
+    if (!file.type.startsWith("image/")) {
+      console.warn("Dropzone: Unsupported file type", file.type);
+      return;
+    }
+
+    if (localPreview) {
+      URL.revokeObjectURL(localPreview);
+    }
 
     const url = URL.createObjectURL(file);
     setLocalPreview(url);
@@ -29,21 +35,20 @@ const Dropzone: React.FC<DropzoneProps> = ({ onFileSelect, imgURL }) => {
     handleFiles(e.dataTransfer.files);
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) =>
     e.preventDefault();
-  };
 
   const handleClick = () => inputRef.current?.click();
 
-  /**
-   * Dynamic container styles depending on orientation
-   */
+  useEffect(() => {
+    return () => {
+      if (localPreview) URL.revokeObjectURL(localPreview);
+    };
+  }, [localPreview]);
 
   return (
     <div
-      className={
-        "p-4 border-gray-200 border-2 border-dashed rounded-xl cursor-pointer flex flex-col items-center justify-center hover:bg-purple-50 hover:border-purple-400 "
-      }
+      className="p-4 border-gray-200 border-2 border-dashed rounded-xl cursor-pointer flex flex-col items-center justify-center hover:bg-purple-50 hover:border-purple-400"
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onClick={handleClick}
@@ -53,11 +58,7 @@ const Dropzone: React.FC<DropzoneProps> = ({ onFileSelect, imgURL }) => {
           <img
             src={preview}
             alt="Preview"
-            className="
-              max-h-[500px]
-              object-contain
-              rounded-md
-            "
+            className="max-h-[500px] object-contain rounded-md"
           />
         </div>
       ) : (
@@ -71,7 +72,7 @@ const Dropzone: React.FC<DropzoneProps> = ({ onFileSelect, imgURL }) => {
         ref={inputRef}
         className="hidden"
         accept="image/*"
-        onChange={(e) => e.target.files && handleFiles(e.target.files)}
+        onChange={(e) => handleFiles(e.target.files)}
       />
     </div>
   );

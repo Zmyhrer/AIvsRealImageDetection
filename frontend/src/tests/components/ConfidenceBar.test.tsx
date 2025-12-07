@@ -1,26 +1,38 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import ConfidenceBar from "../../components/ConfidenceBar";
 
-describe("ConfidenceBar", () => {
-  const getInnerDiv = () => screen.getByRole("progressbar");
+describe("ConfidenceBar Component", () => {
+  const getInnerDiv = () => screen.getAllByRole("progressbar")[0];
 
   beforeEach(() => {
     document.body.innerHTML = "";
   });
 
+  afterEach(() => cleanup());
+
   test("renders without crashing", () => {
     render(<ConfidenceBar confidenceScore={50} />);
-    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+    expect(getInnerDiv()).toBeInTheDocument();
   });
 
-  test("renders gray bar for 0 or undefined confidence", () => {
+  test("renders gray bar for 0, null, or undefined confidence", () => {
     render(<ConfidenceBar confidenceScore={0} />);
-    const innerDiv = getInnerDiv();
-    expect(innerDiv).toHaveClass("bg-gray-300");
+    let innerDiv = getInnerDiv();
+    expect(innerDiv).toHaveClass("bg-gray-200");
+    expect(innerDiv).toHaveStyle("width: 0%");
+
+    render(<ConfidenceBar confidenceScore={null} />);
+    innerDiv = getInnerDiv();
+    expect(innerDiv).toHaveClass("bg-gray-200");
+    expect(innerDiv).toHaveStyle("width: 0%");
+
+    render(<ConfidenceBar confidenceScore={undefined} />);
+    innerDiv = getInnerDiv();
+    expect(innerDiv).toHaveClass("bg-gray-200");
     expect(innerDiv).toHaveStyle("width: 0%");
   });
 
-  test("renders red bar for confidence <= 50", () => {
+  test("renders red bar for confidence <= 50 (excluding 0)", () => {
     render(<ConfidenceBar confidenceScore={50} />);
     const innerDiv = getInnerDiv();
     expect(innerDiv).toHaveClass("bg-red-500");
@@ -48,11 +60,18 @@ describe("ConfidenceBar", () => {
     expect(innerDiv).toHaveStyle("width: 100%");
   });
 
-  test("renders correctly for negative confidence values", () => {
+  test("clamps negative confidence values to 0", () => {
     render(<ConfidenceBar confidenceScore={-10} />);
     const innerDiv = getInnerDiv();
-    expect(innerDiv).toHaveClass("bg-gray-300");
-    expect(innerDiv).toHaveStyle("width: -10%");
+    expect(innerDiv).toHaveClass("bg-gray-200");
+    expect(innerDiv).toHaveStyle("width: 0%");
+  });
+
+  test("clamps confidence values above 100 to 100", () => {
+    render(<ConfidenceBar confidenceScore={150} />);
+    const innerDiv = getInnerDiv();
+    expect(innerDiv).toHaveClass("bg-green-500");
+    expect(innerDiv).toHaveStyle("width: 100%");
   });
 
   test("renders correct classes for decimal confidence values", () => {

@@ -1,82 +1,66 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, cleanup } from "@testing-library/react";
 import PredictionDisplay from "../../components/PredictionDisplay";
 
-// Mock ConfidenceBar to isolate PredictionDisplay tests
 jest.mock("../../components/ConfidenceBar", () => ({
   __esModule: true,
-  default: ({ confidenceScore }: { confidenceScore: number | null }) => (
+  default: ({ confidenceScore }: { confidenceScore: number }) => (
     <div data-testid="confidence-bar">{confidenceScore}</div>
   ),
 }));
 
 describe("PredictionDisplay Component", () => {
-  it("renders prediction and confidence correctly", () => {
+  afterEach(() => cleanup());
+
+  test("renders prediction and confidence correctly", () => {
     render(<PredictionDisplay prediction="Cat" confidenceScore={85} />);
-
-    const predictionElement = screen.getByRole("heading", { name: /cat/i });
-    const confidenceElement = screen.getByText(/confidence: 85%/i);
-    const confidenceBar = screen.getByTestId("confidence-bar");
-
-    expect(predictionElement).toBeInTheDocument();
-    expect(confidenceElement).toBeInTheDocument();
-    expect(confidenceBar).toHaveTextContent("85");
+    expect(screen.getByRole("heading", { name: /cat/i })).toBeInTheDocument();
+    expect(screen.getByText(/confidence:\s*85%/i)).toBeInTheDocument();
+    expect(screen.getByTestId("confidence-bar")).toHaveTextContent("85");
   });
 
-  it("renders correctly when confidenceScore is null", () => {
+  test("handles null confidenceScore and uses normalized bar value 0", () => {
     render(<PredictionDisplay prediction="Dog" confidenceScore={null} />);
-
-    const predictionElement = screen.getByRole("heading", { name: /dog/i });
-    const confidenceElement = screen.getByText(/confidence: null%/i);
-    const confidenceBar = screen.getByTestId("confidence-bar");
-
-    expect(predictionElement).toBeInTheDocument();
-    expect(confidenceElement).toBeInTheDocument();
-    expect(confidenceBar).toHaveTextContent("null");
+    expect(screen.getByRole("heading", { name: /dog/i })).toBeInTheDocument();
+    expect(screen.getByText(/confidence:\s*n\/a\s*%/i)).toBeInTheDocument();
+    expect(screen.getByTestId("confidence-bar")).toHaveTextContent("0");
   });
 
-  it("updates when props change", () => {
+  test("updates when props change", () => {
     const { rerender } = render(
       <PredictionDisplay prediction="Cat" confidenceScore={50} />
     );
-
-    let predictionElement = screen.getByRole("heading", { name: /cat/i });
-    let confidenceElement = screen.getByText(/confidence: 50%/i);
-    expect(predictionElement).toBeInTheDocument();
-    expect(confidenceElement).toBeInTheDocument();
+    expect(screen.getByText(/confidence:\s*50%/i)).toBeInTheDocument();
 
     rerender(<PredictionDisplay prediction="Dog" confidenceScore={90} />);
-
-    predictionElement = screen.getByRole("heading", { name: /dog/i });
-    confidenceElement = screen.getByText(/confidence: 90%/i);
-    expect(predictionElement).toBeInTheDocument();
-    expect(confidenceElement).toBeInTheDocument();
+    expect(screen.getByText(/confidence:\s*90%/i)).toBeInTheDocument();
   });
 
-  it("handles empty string prediction gracefully", () => {
+  test("handles empty prediction", () => {
     render(<PredictionDisplay prediction="" confidenceScore={75} />);
-    const predictionElement = screen.getByRole("heading");
-    const confidenceElement = screen.getByText(/confidence: 75%/i);
-
-    expect(predictionElement).toBeInTheDocument();
-    expect(confidenceElement).toBeInTheDocument();
+    expect(screen.getByRole("heading")).toHaveTextContent("No prediction");
+    expect(screen.getByText(/confidence:\s*75%/i)).toBeInTheDocument();
   });
 
-  it("handles negative or >100 confidence scores (edge cases)", () => {
-    render(<PredictionDisplay prediction="Weird" confidenceScore={-10} />);
-    expect(screen.getByText(/confidence: -10%/i)).toBeInTheDocument();
+  test("normalizes confidenceScore below 0 and above 100 for the bar", () => {
+    const { rerender } = render(
+      <PredictionDisplay prediction="Low" confidenceScore={-10} />
+    );
+    expect(screen.getByText(/confidence:\s*-10%/i)).toBeInTheDocument();
+    expect(screen.getByTestId("confidence-bar")).toHaveTextContent("0");
 
-    render(<PredictionDisplay prediction="Weird" confidenceScore={150} />);
-    expect(screen.getByText(/confidence: 150%/i)).toBeInTheDocument();
+    rerender(<PredictionDisplay prediction="High" confidenceScore={150} />);
+    expect(screen.getByText(/confidence:\s*150%/i)).toBeInTheDocument();
+    expect(screen.getByTestId("confidence-bar")).toHaveTextContent("100");
   });
 
-  it("renders correctly with undefined props (edge case)", () => {
+  test("handles undefined prediction and confidenceScore", () => {
     render(
       <PredictionDisplay prediction={undefined} confidenceScore={undefined} />
     );
+    expect(screen.getByRole("heading")).toHaveTextContent("No prediction");
 
-    const predictionElement = screen.getByRole("heading");
-    const confidenceElement = screen.getByText(/confidence: undefined%/i);
-    expect(predictionElement).toBeInTheDocument();
-    expect(confidenceElement).toBeInTheDocument();
+    expect(screen.getByText(/confidence:\s*n\/a\s*%/i)).toBeInTheDocument();
+
+    expect(screen.getByTestId("confidence-bar")).toHaveTextContent("0");
   });
 });

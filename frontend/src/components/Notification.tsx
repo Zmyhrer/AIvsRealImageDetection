@@ -1,25 +1,20 @@
 import React, { useEffect, useState } from "react";
 
 interface NotificationProps {
-  message: string;
-  type: "success" | "error";
+  message?: string;
+  type?: "success" | "error";
   onClose: () => void;
 }
-
-/**
- * A modern notification component that auto-closes after 5 seconds.
- * Shows a slide-in effect from the top-right and fades out smoothly.
- */
 const Notification: React.FC<NotificationProps> = ({
-  message,
-  type,
+  message = "No message provided",
+  type = "success",
   onClose,
 }) => {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => setVisible(false), 4500); // start fade out
-    const removeTimer = setTimeout(() => onClose(), 5000); // remove completely
+    const timer = setTimeout(() => setVisible(false), 4500);
+    const removeTimer = setTimeout(() => onClose(), 5000);
     return () => {
       clearTimeout(timer);
       clearTimeout(removeTimer);
