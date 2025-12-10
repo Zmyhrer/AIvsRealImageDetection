@@ -17,6 +17,7 @@ describe("Notification Component", () => {
     jest.clearAllMocks();
   });
 
+  // renders a green success notification
   test("renders the notification with success type", () => {
     render(<Notification message={message} type="success" onClose={onClose} />);
     const root = screen.getByText(message).parentElement;
@@ -25,6 +26,7 @@ describe("Notification Component", () => {
     expect(root).toHaveClass("bg-green-500");
   });
 
+  // renders a red error notification
   test("renders the notification with error type", () => {
     render(<Notification message={message} type="error" onClose={onClose} />);
     const root = screen.getByText(message).parentElement;
@@ -33,16 +35,19 @@ describe("Notification Component", () => {
     expect(root).toHaveClass("bg-red-500");
   });
 
+  // displays the message text correctly
   test("displays the correct message text", () => {
     render(<Notification message={message} type="success" onClose={onClose} />);
     expect(screen.getByText(message)).toBeInTheDocument();
   });
 
+  // falls back to default message if none is provided
   test("falls back to default message when none is provided", () => {
     render(<Notification onClose={onClose} />);
     expect(screen.getByText("No message provided")).toBeInTheDocument();
   });
 
+  // calls onClose when user clicks the close button
   test("calls onClose when the close button is clicked", () => {
     render(<Notification message={message} type="success" onClose={onClose} />);
     const closeButton = screen.getByRole("button", {
@@ -53,9 +58,9 @@ describe("Notification Component", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  // auto-hides after 4500ms and then triggers onClose after 5000ms
   test("auto-hides after 4500ms and then closes after 5000ms", () => {
     render(<Notification message={message} type="success" onClose={onClose} />);
-
     const root = screen.getByText(message).parentElement!;
 
     expect(root).toHaveClass("opacity-100");
@@ -71,6 +76,7 @@ describe("Notification Component", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  // does not call onClose before 5 seconds
   test("does not call onClose before 5 seconds", () => {
     render(<Notification message={message} type="success" onClose={onClose} />);
     act(() => {
@@ -79,6 +85,7 @@ describe("Notification Component", () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
+  // cleans up timers on unmount to prevent memory leaks
   test("clears timers on unmount to avoid memory leaks", () => {
     const { unmount } = render(
       <Notification message={message} type="success" onClose={onClose} />

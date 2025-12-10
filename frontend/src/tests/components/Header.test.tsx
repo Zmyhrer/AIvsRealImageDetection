@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import Header from "../../components/Header";
 
 describe("Header Component", () => {
+  // renders the given title and description
   it("renders the title and description correctly", () => {
     render(<Header title="Test Title" description="Test Description" />);
 
@@ -12,6 +13,7 @@ describe("Header Component", () => {
     expect(descriptionElement).toBeInTheDocument();
   });
 
+  // falls back to default text if title/description are empty
   it("renders default text if title and description are empty strings", () => {
     render(<Header title="" description="" />);
 
@@ -22,6 +24,7 @@ describe("Header Component", () => {
     expect(descriptionElement).toBeInTheDocument();
   });
 
+  // handles really long title and description without breaking layout
   it("renders long title and description correctly", () => {
     const longTitle =
       "This is a very long title that should still render correctly";
@@ -37,6 +40,7 @@ describe("Header Component", () => {
     expect(descriptionElement).toBeInTheDocument();
   });
 
+  // updates content when props change dynamically
   it("updates correctly when props change", () => {
     const { rerender } = render(
       <Header title="Old Title" description="Old Description" />
@@ -55,6 +59,7 @@ describe("Header Component", () => {
     expect(screen.getByText(/new description/i)).toBeInTheDocument();
   });
 
+  // handles undefined props gracefully
   it("handles undefined props gracefully", () => {
     render(<Header title={undefined} description={undefined} />);
 

@@ -11,6 +11,7 @@ jest.mock("../../components/ConfidenceBar", () => ({
 describe("PredictionDisplay Component", () => {
   afterEach(() => cleanup());
 
+  // shows prediction and confidence properly
   test("renders prediction and confidence correctly", () => {
     render(<PredictionDisplay prediction="Cat" confidenceScore={85} />);
     expect(screen.getByRole("heading", { name: /cat/i })).toBeInTheDocument();
@@ -18,6 +19,7 @@ describe("PredictionDisplay Component", () => {
     expect(screen.getByTestId("confidence-bar")).toHaveTextContent("85");
   });
 
+  // handles null confidenceScore and falls back to 0 on bar
   test("handles null confidenceScore and uses normalized bar value 0", () => {
     render(<PredictionDisplay prediction="Dog" confidenceScore={null} />);
     expect(screen.getByRole("heading", { name: /dog/i })).toBeInTheDocument();
@@ -25,6 +27,7 @@ describe("PredictionDisplay Component", () => {
     expect(screen.getByTestId("confidence-bar")).toHaveTextContent("0");
   });
 
+  // updates display when props change
   test("updates when props change", () => {
     const { rerender } = render(
       <PredictionDisplay prediction="Cat" confidenceScore={50} />
@@ -35,12 +38,14 @@ describe("PredictionDisplay Component", () => {
     expect(screen.getByText(/confidence:\s*90%/i)).toBeInTheDocument();
   });
 
+  // shows placeholder when prediction is empty
   test("handles empty prediction", () => {
     render(<PredictionDisplay prediction="" confidenceScore={75} />);
     expect(screen.getByRole("heading")).toHaveTextContent("No prediction");
     expect(screen.getByText(/confidence:\s*75%/i)).toBeInTheDocument();
   });
 
+  // normalizes bar for confidenceScore < 0 or > 100
   test("normalizes confidenceScore below 0 and above 100 for the bar", () => {
     const { rerender } = render(
       <PredictionDisplay prediction="Low" confidenceScore={-10} />
@@ -53,14 +58,13 @@ describe("PredictionDisplay Component", () => {
     expect(screen.getByTestId("confidence-bar")).toHaveTextContent("100");
   });
 
+  // handles completely undefined props gracefully
   test("handles undefined prediction and confidenceScore", () => {
     render(
       <PredictionDisplay prediction={undefined} confidenceScore={undefined} />
     );
     expect(screen.getByRole("heading")).toHaveTextContent("No prediction");
-
     expect(screen.getByText(/confidence:\s*n\/a\s*%/i)).toBeInTheDocument();
-
     expect(screen.getByTestId("confidence-bar")).toHaveTextContent("0");
   });
 });

@@ -9,7 +9,7 @@ interface AnalyzeButtonProps {
 const AnalyzeButton: React.FC<AnalyzeButtonProps> = ({
   isAnalyzing = false,
   disabled = false,
-  onClick = () => {},
+  onClick,
 }) => {
   const buttonClasses = `w-full py-3 font-semibold rounded-xl text-white shadow-lg transition-all transform ${
     disabled
@@ -21,7 +21,7 @@ const AnalyzeButton: React.FC<AnalyzeButtonProps> = ({
     <button
       className={buttonClasses}
       onClick={() => {
-        if (!disabled) onClick();
+        if (!disabled && onClick) onClick();
       }}
       disabled={disabled}
     >

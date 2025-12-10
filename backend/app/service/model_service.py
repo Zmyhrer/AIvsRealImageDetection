@@ -10,29 +10,21 @@ model.eval()
 
 TEMPERATURE = 5.0  
 
+# Predicts the class of an image and returns label and confidence
 def predict_image(img: Image.Image, temperature: float = TEMPERATURE):
-    
-    # Preprocess the image
     inputs = processor(img, return_tensors="pt")
     
-    # Get logits without computing gradients
     with torch.no_grad():
         outputs = model(**inputs)
-    
-    logits = outputs.logits
-    # Apply temperature scaling
-    scaled_logits = logits / temperature
-    probs = torch.softmax(scaled_logits, dim=-1)[0]
-    
-    # Get predicted class
-    pred_idx = scaled_logits.argmax(-1).item()
-    pred_label = model.config.id2label[pred_idx]
-    pred_confidence = float(probs[pred_idx])
 
-    # Update label
-    if "ai" in pred_label.lower():
-        pred_label = "AI"
-    else:
-        pred_label = "Real"
+    logits = outputs.logits
+    if logits.numel() == 0:  # handle case where model outputs nothing
+        raise ValueError("Model returned empty logits")
+
+    scaled_logits = logits / temperature  # adjust logits for temperature scaling
+    probs = torch.softmax(scaled_logits, dim=-1)[0]  # take first batch element
+    pred_idx = scaled_logits.argmax(-1).item()
+    label = model.config.id2label.get(pred_idx, "Unknown")
+    confidence = float(probs[pred_idx])
     
-    return pred_label, pred_confidence
+    return label.replace("AI-generated", "AI"), confidence

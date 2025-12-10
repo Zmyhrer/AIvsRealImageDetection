@@ -1,37 +1,32 @@
 import io
 import pytest
 from unittest.mock import patch
-from app.main import app
 from PIL import Image
+from fastapi import UploadFile, HTTPException
 from fastapi.testclient import TestClient
+from app.main import app
+from app.api.v1.routes import predict
+from app.service import model_service
 
 client = TestClient(app)
 
 def create_test_image(mode='RGB', size=(224, 224)) -> io.BytesIO:
-    """
-    Generate an in-memory image for testing.
-    Supports RGB, RGBA, L (grayscale), and CMYK.
-    """
-    if mode == 'L':  # Grayscale
+    if mode == 'L':
         img = Image.new('RGB', size, color=(128, 128, 128))
     elif mode == 'CMYK':
-        img = Image.new('RGB', size, color=(255, 0, 0))  # CMYK saved as JPEG
+        img = Image.new('RGB', size, color=(255, 0, 0))
     elif mode == 'RGBA':
         img = Image.new('RGBA', size, color=(255, 0, 0, 255))
     else:
         img = Image.new('RGB', size, color=(255, 0, 0))
-    
+
     img_bytes = io.BytesIO()
-    if mode == 'CMYK':
-        img.save(img_bytes, format='JPEG')
-    else:
-        img.save(img_bytes, format='PNG')
+    img.save(img_bytes, format='JPEG' if mode == 'CMYK' else 'PNG')
     img_bytes.seek(0)
     return img_bytes
 
-# --- VALID IMAGE TEST ---
+# testing if a normal image uploads and gets predicted correctly
 def test_predict_valid_image():
-    """Test that a valid image returns correct prediction."""
     img = create_test_image()
     with patch("app.api.v1.routes.predict.predict_image") as mock_predict:
         mock_predict.return_value = ("AI", 0.95)
@@ -41,73 +36,106 @@ def test_predict_valid_image():
         assert data["prediction"] == "AI"
         assert data["confidence"] == 0.95
 
-# --- INVALID FILE TYPE ---
+# making sure non-image files trigger a proper error
 def test_predict_invalid_file_type():
-    """Test that uploading a non-image file returns 400."""
     response = client.post("/api/v1/predict/", files={"file": ("test.txt", b"not an image", "text/plain")})
     assert response.status_code == 400
 
-# --- CORRUPTED IMAGE ---
+# verifying corrupted images get rejected by the endpoint
 def test_predict_corrupted_image():
-    """Test that a corrupted image returns 400."""
-    corrupted_content = b"this is not a valid image"
-    response = client.post("/api/v1/predict/", files={"file": ("corrupted.png", corrupted_content, "image/png")})
+    response = client.post("/api/v1/predict/", files={"file": ("corrupted.png", b"notanimage", "image/png")})
     assert response.status_code == 400
 
-# --- MISSING FILE ---
+# checking that a request with no file at all raises a validation error
 def test_predict_no_file():
-    """Test that omitting the file field returns 422 (FastAPI validation)."""
     response = client.post("/api/v1/predict/")
     assert response.status_code == 422
 
-# --- MULTIPLE FILES ---
-def test_predict_multiple_files():
-    """Test that multiple valid images can be processed."""
-    img1 = create_test_image()
-    with patch("app.api.v1.routes.predict.predict_image") as mock_predict:
-        mock_predict.return_value = ("dog", 0.1234)
-        response = client.post("/api/v1/predict/", files={"file": ("img1.png", img1, "image/png")})
-        assert response.status_code == 200
+# direct test: empty filename should trigger a 400 error
+def test_predict_empty_filename_direct():
+    class DummyUpload:
+        filename = ""
+        async def read(self):
+            return b"fakeimagecontent"
 
-# --- PARAMETERIZED IMAGE MODES ---
-@pytest.mark.parametrize("mode", ["L", "RGBA"])
+    import asyncio
+    with pytest.raises(HTTPException) as exc_info:
+        asyncio.run(predict.predict(file=DummyUpload()))
+    assert exc_info.value.status_code == 400
+    assert "valid image file" in exc_info.value.detail
+
+# simulating file.read() failing to ensure endpoint responds correctly
+def test_predict_image_read_exception(monkeypatch):
+    class FakeUpload:
+        filename = "test.png"
+        async def read(self):
+            raise Exception("read fail")
+
+    import asyncio
+    async def call_predict():
+        await predict.predict(file=FakeUpload())
+
+    exc_info = pytest.raises(Exception, lambda: asyncio.run(call_predict()))
+    assert isinstance(exc_info.value, Exception)
+    assert str(exc_info.value) == "400: Unable to process the uploaded file."
+
+# async test for empty filename via UploadFile object
+@pytest.mark.asyncio
+async def test_predict_endpoint_empty_filename():
+    from app.api.v1.routes import predict
+    from fastapi import UploadFile
+    import io
+    dummy_file = UploadFile(filename="", file=io.BytesIO(b"fake"))
+    import pytest
+    with pytest.raises(Exception) as exc_info:
+        await predict.predict(file=dummy_file)
+    assert "valid image file" in str(exc_info.value)
+
+# edge case: model returns empty logits, should raise ValueError
+def test_predict_image_empty_logits(monkeypatch):
+    import torch
+    class EmptyLogitsModel:
+        class Config:
+            id2label = {0: "AI", 1: "Real"}
+        config = Config()
+        def eval(self): pass
+        def __call__(self, **kwargs):
+            return type("Output", (), {"logits": torch.empty((0, 2))})()
+
+    monkeypatch.setattr(model_service, "model", EmptyLogitsModel())
+    monkeypatch.setattr(model_service, "processor", lambda img, **kw: {"pixel_values": None})
+
+    img = Image.new("RGB", (64, 64))
+    import pytest
+    with pytest.raises(ValueError, match="empty logits"):
+        model_service.predict_image(img)
+
+# testing that various image modes like L, RGBA, CMYK are handled without errors
+@pytest.mark.parametrize("mode", ["L", "RGBA", "CMYK"])
 def test_predict_different_image_modes(mode):
-    """Test that different image modes are handled correctly."""
     img = create_test_image(mode=mode)
     with patch("app.api.v1.routes.predict.predict_image") as mock_predict:
         mock_predict.return_value = ("cat", 0.95)
-        content_type = "image/png"
-        response = client.post("/api/v1/predict/", files={f"file": (f"test_{mode}.png", img, content_type)})
+        content_type = "image/jpeg" if mode == "CMYK" else "image/png"
+        response = client.post("/api/v1/predict/", files={"file": (f"test_{mode}.png", img, content_type)})
         assert response.status_code == 200
 
-# --- CMYK IMAGE ---
-def test_predict_cmyk_image():
-    """Test CMYK image is handled as JPEG."""
-    img = create_test_image(mode='CMYK')
-    with patch("app.api.v1.routes.predict.predict_image") as mock_predict:
-        mock_predict.return_value = ("cat", 0.95)
-        response = client.post("/api/v1/predict/", files={"file": ("test_cmyk.jpg", img, "image/jpeg")})
-        assert response.status_code == 200
-
-# --- EMPTY FILE ---
-def test_predict_empty_file():
-    """Test that an empty file returns 400."""
-    empty_file = io.BytesIO(b"")
-    response = client.post("/api/v1/predict/", files={"file": ("empty.png", empty_file, "image/png")})
-    assert response.status_code == 400
-
-# --- MODEL EXCEPTION ---
+# simulating the model throwing an exception to check 400 response
 def test_predict_model_exception():
-    """Test that model errors return 400."""
     img = create_test_image()
     with patch("app.api.v1.routes.predict.predict_image") as mock_predict:
         mock_predict.side_effect = Exception("Model error")
         response = client.post("/api/v1/predict/", files={"file": ("test.png", img, "image/png")})
         assert response.status_code == 400
 
-# --- LARGE IMAGE ---
+# uploading an empty file should trigger a 400
+def test_predict_empty_file():
+    empty_file = io.BytesIO(b"")
+    response = client.post("/api/v1/predict/", files={"file": ("empty.png", empty_file, "image/png")})
+    assert response.status_code == 400
+
+# large image uploads should still work fine
 def test_predict_large_image():
-    """Test that a large image is handled without crashing."""
     large_img = create_test_image(size=(1000, 1000))
     with patch("app.api.v1.routes.predict.predict_image") as mock_predict:
         mock_predict.return_value = ("cat", 0.95)
