@@ -9,6 +9,7 @@ interface DropzoneProps {
 const Dropzone: React.FC<DropzoneProps> = ({ onFileSelect, imgURL = null }) => {
   const [localPreview, setLocalPreview] = useState<string | null>(null); // Local preview URL
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const preview = imgURL || localPreview; // Use external URL if provided, else local preview
 
@@ -35,11 +36,14 @@ const Dropzone: React.FC<DropzoneProps> = ({ onFileSelect, imgURL = null }) => {
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    setIsDragging(false);
     handleFiles(e.dataTransfer.files); // Handle files dropped
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) =>
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault(); // Needed to allow drop
+    setIsDragging(true);
+  };
 
   const handleClick = () => inputRef.current?.click(); // Open file dialog on click
 
@@ -50,11 +54,23 @@ const Dropzone: React.FC<DropzoneProps> = ({ onFileSelect, imgURL = null }) => {
     };
   }, [localPreview]);
 
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
   return (
     <div
-      className="p-4 border-gray-200 border-2 border-dashed rounded-xl cursor-pointer flex flex-col items-center justify-center hover:bg-purple-50 hover:border-purple-400"
+      className={`
+    p-4 border-2 border-dashed rounded-xl cursor-pointer flex flex-col items-center justify-center
+    transition-all duration-200
+
+    ${isDragging ? "bg-purple-100 border-purple-500" : "border-gray-200"}
+
+    hover:bg-purple-50 hover:border-purple-400
+  `}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
       onClick={handleClick}
     >
       {preview ? (

@@ -22,9 +22,7 @@ const PredictionDisplay: React.FC<PredictionDisplayProps> = ({
       <h2 className="text-2xl font-bold text-gray-800 mb-2">
         {prediction || "No prediction"}
       </h2>
-      <p className="text-gray-600 mb-4">
-        Confidence: {confidenceScore ?? "N/A"}%
-      </p>
+      <p className="text-gray-600 mb-4">Confidence: {confidenceScore ?? ""}%</p>
       <ConfidenceBar confidenceScore={normalizedConfidence} />
     </div>
   );

@@ -23,7 +23,7 @@ describe("PredictionDisplay Component", () => {
   test("handles null confidenceScore and uses normalized bar value 0", () => {
     render(<PredictionDisplay prediction="Dog" confidenceScore={null} />);
     expect(screen.getByRole("heading", { name: /dog/i })).toBeInTheDocument();
-    expect(screen.getByText(/confidence:\s*n\/a\s*%/i)).toBeInTheDocument();
+    expect(screen.getByText(/confidence: %/i)).toBeInTheDocument();
     expect(screen.getByTestId("confidence-bar")).toHaveTextContent("0");
   });
 
@@ -64,7 +64,7 @@ describe("PredictionDisplay Component", () => {
       <PredictionDisplay prediction={undefined} confidenceScore={undefined} />
     );
     expect(screen.getByRole("heading")).toHaveTextContent("No prediction");
-    expect(screen.getByText(/confidence:\s*n\/a\s*%/i)).toBeInTheDocument();
+    expect(screen.getByText(/confidence: %/i)).toBeInTheDocument();
     expect(screen.getByTestId("confidence-bar")).toHaveTextContent("0");
   });
 });
