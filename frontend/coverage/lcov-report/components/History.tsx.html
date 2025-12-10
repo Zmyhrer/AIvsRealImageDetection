@@ -147,8 +147,13 @@
 <a name='L82'></a><a href='#L82'>82</a>
 <a name='L83'></a><a href='#L83'>83</a>
 <a name='L84'></a><a href='#L84'>84</a>
-<a name='L85'></a><a href='#L85'>85</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -230,29 +235,33 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React from "react";
 import ConfidenceBar from "./ConfidenceBar";
 &nbsp;
 export interface HistoryItem {
-  id: string;
-  imageUrl: string;
-  prediction: string;
-  confidence: number;
+  id: string; // Unique identifier for each history entry
+  imageUrl: string; // Thumbnail or image URL
+  prediction: string; // AI vs Real prediction
+  confidence: number; // Confidence percentage
 }
 &nbsp;
 interface HistoryProps {
-  history?: HistoryItem[];
-  onSelect?: (item: HistoryItem) =&gt; void;
-  onClear?: () =&gt; void;
+  history?: HistoryItem[]; // Optional list of history entries
+  onSelect?: (item: HistoryItem) =&gt; void; // Callback when a history item is clicked
+  onClear?: () =&gt; void; // Callback to clear history
 }
 &nbsp;
+// Displays a scrollable list of previous predictions with thumbnails and confidence
 const History: React.FC&lt;HistoryProps&gt; = ({ history, onSelect, onClear }) =&gt; {
   if (!Array.isArray(history)) {
     console.warn(
       "History component expected `history` to be an array. Rendering empty list."
     );
-    history = [];
+    history = []; // Ensure rendering doesn't break if history is invalid
   }
 &nbsp;
   return (
@@ -263,7 +272,7 @@ const History: React.FC&lt;HistoryProps&gt; = ({ history, onSelect, onClear }) =
         &lt;/h3&gt;
 &nbsp;
         &lt;button
-          onClick={onClear ?? (() =&gt; {})}
+          onClick={onClear ?? (() =&gt; {})} // fallback no-op if onClear not provided
           className="text-sm sm:text-base text-red-600 hover:text-red-800 transition-colors"
         &gt;
           Clear
@@ -278,14 +287,14 @@ const History: React.FC&lt;HistoryProps&gt; = ({ history, onSelect, onClear }) =
         ) : (
           history.map((item) =&gt; {
             if (!item?.id || !item?.imageUrl) {
-              console.warn("Skipping invalid history item:", item);
+              console.warn("Skipping invalid history item:", item); // skip corrupted entries
               return null;
             }
             return (
               &lt;div
                 key={item.id}
                 className="flex flex-col sm:flex-row sm:items-start p-3 rounded-xl cursor-pointer bg-white border border-gray-300 hover:border-purple-400"
-                onClick={() =&gt; onSelect?.(item)}
+                onClick={() =&gt; onSelect?.(item)} // call onSelect if provided
               &gt;
                 &lt;img
                   src={item.imageUrl}
@@ -297,13 +306,16 @@ const History: React.FC&lt;HistoryProps&gt; = ({ history, onSelect, onClear }) =
                 &lt;div className="grow flex flex-col justify-between"&gt;
                   &lt;div className="flex justify-between items-center mb-1 space-x-2.5"&gt;
                     &lt;p className="font-semibold text-gray-800 text-sm sm:text-base wrap-break-words"&gt;
-                      {item.prediction || "Unknown"}
+                      {item.prediction || "Unknown"}{" "}
+                      {/* fallback if prediction missing */}
                     &lt;/p&gt;
                     &lt;p className="text-sm sm:text-base text-gray-600"&gt;
-                      {item.confidence ?? 0}%
+                      {item.confidence ?? 0}%{" "}
+                      {/* default confidence to 0 if missing */}
                     &lt;/p&gt;
                   &lt;/div&gt;
-                  &lt;ConfidenceBar confidenceScore={item.confidence ?? 0} /&gt;
+                  &lt;ConfidenceBar confidenceScore={item.confidence ?? 0} /&gt;{" "}
+                  {/* visual representation of confidence */}
                 &lt;/div&gt;
               &lt;/div&gt;
             );
@@ -322,7 +334,7 @@ export default History;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-10T02:21:14.532Z
+                at 2025-12-10T02:29:42.285Z
             </div>
         <script src="../prettify.js"></script>
         <script>

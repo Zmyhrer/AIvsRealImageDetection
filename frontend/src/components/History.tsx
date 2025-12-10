@@ -2,24 +2,25 @@ import React from "react";
 import ConfidenceBar from "./ConfidenceBar";
 
 export interface HistoryItem {
-  id: string;
-  imageUrl: string;
-  prediction: string;
-  confidence: number;
+  id: string; // Unique identifier for each history entry
+  imageUrl: string; // Thumbnail or image URL
+  prediction: string; // AI vs Real prediction
+  confidence: number; // Confidence percentage
 }
 
 interface HistoryProps {
-  history?: HistoryItem[];
-  onSelect?: (item: HistoryItem) => void;
-  onClear?: () => void;
+  history?: HistoryItem[]; // Optional list of history entries
+  onSelect?: (item: HistoryItem) => void; // Callback when a history item is clicked
+  onClear?: () => void; // Callback to clear history
 }
 
+// Displays a scrollable list of previous predictions with thumbnails and confidence
 const History: React.FC<HistoryProps> = ({ history, onSelect, onClear }) => {
   if (!Array.isArray(history)) {
     console.warn(
       "History component expected `history` to be an array. Rendering empty list."
     );
-    history = [];
+    history = []; // Ensure rendering doesn't break if history is invalid
   }
 
   return (
@@ -30,7 +31,7 @@ const History: React.FC<HistoryProps> = ({ history, onSelect, onClear }) => {
         </h3>
 
         <button
-          onClick={onClear ?? (() => {})}
+          onClick={onClear ?? (() => {})} // fallback no-op if onClear not provided
           className="text-sm sm:text-base text-red-600 hover:text-red-800 transition-colors"
         >
           Clear
@@ -45,14 +46,14 @@ const History: React.FC<HistoryProps> = ({ history, onSelect, onClear }) => {
         ) : (
           history.map((item) => {
             if (!item?.id || !item?.imageUrl) {
-              console.warn("Skipping invalid history item:", item);
+              console.warn("Skipping invalid history item:", item); // skip corrupted entries
               return null;
             }
             return (
               <div
                 key={item.id}
                 className="flex flex-col sm:flex-row sm:items-start p-3 rounded-xl cursor-pointer bg-white border border-gray-300 hover:border-purple-400"
-                onClick={() => onSelect?.(item)}
+                onClick={() => onSelect?.(item)} // call onSelect if provided
               >
                 <img
                   src={item.imageUrl}
@@ -64,13 +65,16 @@ const History: React.FC<HistoryProps> = ({ history, onSelect, onClear }) => {
                 <div className="grow flex flex-col justify-between">
                   <div className="flex justify-between items-center mb-1 space-x-2.5">
                     <p className="font-semibold text-gray-800 text-sm sm:text-base wrap-break-words">
-                      {item.prediction || "Unknown"}
+                      {item.prediction || "Unknown"}{" "}
+                      {/* fallback if prediction missing */}
                     </p>
                     <p className="text-sm sm:text-base text-gray-600">
-                      {item.confidence ?? 0}%
+                      {item.confidence ?? 0}%{" "}
+                      {/* default confidence to 0 if missing */}
                     </p>
                   </div>
-                  <ConfidenceBar confidenceScore={item.confidence ?? 0} />
+                  <ConfidenceBar confidenceScore={item.confidence ?? 0} />{" "}
+                  {/* visual representation of confidence */}
                 </div>
               </div>
             );

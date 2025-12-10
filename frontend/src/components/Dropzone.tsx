@@ -1,46 +1,50 @@
 import React, { useRef, useState, useEffect } from "react";
 
 interface DropzoneProps {
-  onFileSelect: (file: File) => void;
-  imgURL?: string | null;
+  onFileSelect: (file: File) => void; // Callback when user selects or drops a file
+  imgURL?: string | null; // Optional externally provided image URL
 }
 
+// Dropzone component for drag-and-drop or click-to-select images
 const Dropzone: React.FC<DropzoneProps> = ({ onFileSelect, imgURL = null }) => {
-  const [localPreview, setLocalPreview] = useState<string | null>(null);
+  const [localPreview, setLocalPreview] = useState<string | null>(null); // Local preview URL
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const preview = imgURL || localPreview;
+  const preview = imgURL || localPreview; // Use external URL if provided, else local preview
 
   const handleFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
     const file = files[0];
 
+    // Ignore unsupported file types
     if (!file.type.startsWith("image/")) {
       console.warn("Dropzone: Unsupported file type", file.type);
       return;
     }
 
+    // Revoke previous preview to free memory
     if (localPreview) {
       URL.revokeObjectURL(localPreview);
     }
 
     const url = URL.createObjectURL(file);
-    setLocalPreview(url);
-    onFileSelect(file);
+    setLocalPreview(url); // Set new preview
+    onFileSelect(file); // Notify parent
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    handleFiles(e.dataTransfer.files);
+    handleFiles(e.dataTransfer.files); // Handle files dropped
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) =>
-    e.preventDefault();
+    e.preventDefault(); // Needed to allow drop
 
-  const handleClick = () => inputRef.current?.click();
+  const handleClick = () => inputRef.current?.click(); // Open file dialog on click
 
   useEffect(() => {
+    // Cleanup: revoke object URL when component unmounts or preview changes
     return () => {
       if (localPreview) URL.revokeObjectURL(localPreview);
     };

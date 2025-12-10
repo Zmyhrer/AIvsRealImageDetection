@@ -2,14 +2,16 @@ import React from "react";
 import ConfidenceBar from "./ConfidenceBar";
 
 interface PredictionDisplayProps {
-  prediction?: string | null;
-  confidenceScore?: number | null;
+  prediction?: string | null; // The predicted label from the model
+  confidenceScore?: number | null; // Confidence percentage (0-100)
 }
 
+// Displays the prediction result along with a visual confidence bar
 const PredictionDisplay: React.FC<PredictionDisplayProps> = ({
   prediction = "No prediction",
   confidenceScore = null,
 }) => {
+  // Ensure the confidence value is within 0-100 for the bar
   const normalizedConfidence =
     typeof confidenceScore === "number"
       ? Math.min(Math.max(confidenceScore, 0), 100)
