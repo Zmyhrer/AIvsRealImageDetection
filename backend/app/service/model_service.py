@@ -34,8 +34,8 @@ def predict_image(img: Image.Image, temperature: float = TEMPERATURE):
 
     # Normalize label names for downstream use
     normalized_label = (
-        raw_label.replace("AI-generated", "AI")
-                 .replace("hum", "Real")
+        raw_label.replace("hum", "Real")
+                 .replace("ai", "AI")
     )
 
     return normalized_label, confidence

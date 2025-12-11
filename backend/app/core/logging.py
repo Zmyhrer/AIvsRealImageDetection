@@ -1,51 +1,64 @@
 import logging
-from logging.handlers import RotatingFileHandler
+from logging import Handler
 import sys
+from pathlib import Path
+
+
+class PrependFileHandler(Handler):
+    """
+    A custom log handler that prepends new log entries to the top of the file.
+    This ensures the newest log messages appear first.
+    """
+
+    def __init__(self, file_path: str):
+        super().__init__()
+        self.file_path = Path(file_path)
+
+    def emit(self, record: logging.LogRecord) -> None:
+    
+        try:
+            message = self.format(record)
+            old_content = ""
+
+            if self.file_path.exists():
+                old_content = self.file_path.read_text()
+
+            new_content = f"{message}\n{old_content}"
+            self.file_path.write_text(new_content)
+
+        except Exception:
+            self.handleError(record)
+
 
 def setup_logging(
     log_level: str = "INFO",
     log_file: str = "app.log",
-    max_bytes: int = 5 * 1024 * 1024,  # 5 MB per file
-    backup_count: int = 3
 ):
     """
-    Sets up logging configuration for the FastAPI app.
-    
-    This configures both console and file logging with a rotating file handler.
-
-    Args:
-        log_level (str): Minimum log level to capture (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-        log_file (str): Path to the log file
-        max_bytes (int): Maximum size in bytes before rotating the log file
-        backup_count (int): Number of backup log files to keep
+    Configures application logging such that the newest entries
+    are always written at the top of the log file.h.
     """
 
-    # Create the root logger
     logger = logging.getLogger()
     logger.setLevel(getattr(logging, log_level.upper(), logging.INFO))
-    
-    # Formatter for log messages
+
     formatter = logging.Formatter(
         fmt="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        datefmt="%d-%m-%Y %H:%M:%S"
     )
 
-    # Console handler (stdout)
+    # Console output handler
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 
-    # Rotating file handler
-    file_handler = RotatingFileHandler(
-        log_file,
-        maxBytes=max_bytes,
-        backupCount=backup_count
-    )
+    # Prepend-style file handler
+    file_handler = PrependFileHandler(log_file)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
-    # Optional: suppress overly verbose logs from libraries
+    # Quiet common noisy loggers
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
     logging.getLogger("uvicorn.error").setLevel(logging.INFO)
-    
-    logger.info("Logging is configured successfully.")
+
+    logger.info("Logging configured with newest entries first.")
